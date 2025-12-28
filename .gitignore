@@ -1,0 +1,20 @@
+# 1. Ignore dependencies
+node_modules/
+
+# 2. Ignore environment secrets (Critical!)
+.env
+.env.*
+.env.example
+.vscode/
+.continue/
+
+# 3. Ignore build output (Git doesn't need it, but npm will still use it)
+dist/
+
+# 4. Ignore logs and system files
+*.log
+.DS_Store
+Thumbs.db
+
+# 5. Ignore TypeScript build info
+*.tsbuildinfo
