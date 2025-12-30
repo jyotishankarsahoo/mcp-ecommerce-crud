@@ -1,5 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { z } from "zod";
+import { boolean, z } from "zod";
 import { ProductService } from "../services/ProductService.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
@@ -62,23 +62,56 @@ server.registerTool(
     },
     async ({ id }) => {
         const product = await svc.getProductById(id);
-        if (!product){
+        if (!product) {
             return {
                 content: [{ type: "text", text: `Product ${id} not found` }],
-                isError: true
+                isError: true,
             };
         }
         return {
-            content: [{ type: "text", text: JSON.stringify(product)}],
+            content: [{ type: "text", text: JSON.stringify(product) }],
             structuredContent: product as any,
         };
     }
 );
 
-(
-    // Start Communication with Client
-    async () => {
-        const transport = new StdioServerTransport();
-        await server.connect(transport);
+server.registerTool(
+    "delete_product_by_id",
+    {
+        title: "Delete Product",
+        description:
+            "Delete Product by given Product ID. Returns { deleted: boolean }.",
+        inputSchema: {
+            id: z.number().int().positive(),
+        },
+        outputSchema: {
+            deleted: z.boolean(),
+        },
+    },
+    async ({ id }) => {
+        const is_deleted = await svc.deleteProduct(id);
+        if (!is_deleted) {
+            return {
+                content: [
+                    {
+                        type: "text",
+                        text: `Unable to Delete Product with ID: ${id}`,
+                    },
+                ],
+                isError: true
+            };
+        }
+        return {
+            content: [
+                { type: "text", text: JSON.stringify({ deleted: is_deleted }) },
+            ],
+            structuredContent: is_deleted as any,
+        };
     }
-)();
+);
+
+// Start Communication with Client
+(async () => {
+    const transport = new StdioServerTransport();
+    await server.connect(transport);
+})();
