@@ -49,8 +49,36 @@ server.registerTool(
         };
     }
 );
-// Start Communication with Client
-(async () => {
-    const transport = new StdioServerTransport();
-    await server.connect(transport);
-})();
+
+server.registerTool(
+    "get_product_by_Id",
+    {
+        title: "Get Product By ID",
+        description: "It will fetch a single Product by numeric ID",
+        inputSchema: {
+            id: z.number().int().positive(),
+        },
+        outputSchema: ProductScheme.shape,
+    },
+    async ({ id }) => {
+        const product = await svc.getProductById(id);
+        if (!product){
+            return {
+                content: [{ type: "text", text: `Product ${id} not found` }],
+                isError: true
+            };
+        }
+        return {
+            content: [{ type: "text", text: JSON.stringify(product)}],
+            structuredContent: product as any,
+        };
+    }
+);
+
+(
+    // Start Communication with Client
+    async () => {
+        const transport = new StdioServerTransport();
+        await server.connect(transport);
+    }
+)();
