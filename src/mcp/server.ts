@@ -20,6 +20,14 @@ const ProductScheme = z.object({
     updated_at: z.union([z.string(), z.date()]).optional(),
 });
 
+const Product_Input_Scheme = z.object({
+    sku: z.string().min(1),
+    name: z.string().min(1),
+    description: z.string().optional().nullable(),
+    price: z.number().nonnegative(),
+    quantity: z.number().int().nonnegative(),
+});
+
 server.registerTool(
     "add_product",
     {
@@ -109,7 +117,47 @@ server.registerTool(
         };
     }
 );
-
+server.registerTool(
+    "add-product-smart",
+    {
+        title: "Add Product (AI Enhanced)",
+        description: "Add Product Description if missing using AI",
+        inputSchema: Product_Input_Scheme.shape,
+        outputSchema: ProductScheme.shape,
+    },
+    async (raw) => {
+        const product_details = Product_Input_Scheme.parse(raw);
+        let finalDescription = product_details.description;
+        if (!finalDescription) {
+            const ai_prompt = `Write a 2-3 sentence product description for ${product_details.name} with price ${product_details.price}`;
+            const response = await server.server.createMessage({
+                messages: [
+                    {
+                        role: "user",
+                        content: { type: "text", text: ai_prompt },
+                    },
+                ],
+                maxTokens: 100,
+            });
+            if (response.content.type === "text") {
+                finalDescription = response.content.text;
+            } else {
+                // Handle cases where the AI might return an image or something else
+                throw new Error(
+                    `Expected text from AI, but received ${response.content.type}`
+                );
+            }
+        }
+        const created = await svc.addProduct({
+            ...product_details,
+            description: finalDescription,
+        });
+        return {
+            content: [{ type: "text", text: JSON.stringify(created) }],
+            structuredContent: created as any,
+        };
+    }
+);
 server.registerResource(
     "product-catalog",
     "product://catalog",
@@ -142,8 +190,14 @@ server.registerResource(
             (product) => product.quantity < 5
         );
         return {
-            contents: [{uri: uri.href, type: "text", text: JSON.stringify(low_inventory_product)}]
-        }
+            contents: [
+                {
+                    uri: uri.href,
+                    type: "text",
+                    text: JSON.stringify(low_inventory_product),
+                },
+            ],
+        };
     }
 );
 // Start Communication with Client
