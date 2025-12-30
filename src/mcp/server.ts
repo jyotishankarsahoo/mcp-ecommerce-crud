@@ -1,12 +1,13 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
-import {z} from "zod"
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { z } from "zod";
 import { ProductService } from "../services/ProductService.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
 const server = new McpServer({
     name: "mcp-ecommerce-crud",
-    version: "1.0.0"
-})
-const svc = new ProductService()
+    version: "1.0.0",
+});
+const svc = new ProductService();
 
 const ProductScheme = z.object({
     id: z.number().int().positive().optional(),
@@ -20,7 +21,7 @@ const ProductScheme = z.object({
 });
 
 server.registerTool(
-    "add_product", 
+    "add_product",
     {
         title: "Add Product",
         description:
@@ -32,13 +33,24 @@ server.registerTool(
             price: z.number().nonnegative(),
             quantity: z.number().int().nonnegative(),
         },
-        outputSchema: ProductScheme.shape
+        outputSchema: ProductScheme.shape,
     },
-    async({sku, name, description, price, quantity}) => {
-        const created = await svc.addProduct({ sku, name, description, price, quantity });
+    async ({ sku, name, description, price, quantity }) => {
+        const created = await svc.addProduct({
+            sku,
+            name,
+            description,
+            price,
+            quantity,
+        });
         return {
             content: [{ type: "text", text: JSON.stringify(created) }],
-            structuredContent: created as any
+            structuredContent: created as any,
         };
     }
 );
+// Start Communication with Client
+(async () => {
+    const transport = new StdioServerTransport();
+    await server.connect(transport);
+})();
