@@ -129,6 +129,23 @@ server.registerResource(
         };
     }
 );
+
+server.registerResource(
+    "product-low-inventory",
+    "product://lowInventory",
+    {
+        description: "Provides Product list with low number of inventory",
+    },
+    async (uri) => {
+        const product_list = await svc.listProducts(100, 0);
+        const low_inventory_product = product_list.filter(
+            (product) => product.quantity < 5
+        );
+        return {
+            contents: [{uri: uri.href, type: "text", text: JSON.stringify(low_inventory_product)}]
+        }
+    }
+);
 // Start Communication with Client
 (async () => {
     const transport = new StdioServerTransport();
