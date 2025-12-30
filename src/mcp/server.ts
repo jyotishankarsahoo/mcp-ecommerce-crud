@@ -1,5 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { boolean, z } from "zod";
+import { z } from "zod";
 import { ProductService } from "../services/ProductService.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
@@ -98,7 +98,7 @@ server.registerTool(
                         text: `Unable to Delete Product with ID: ${id}`,
                     },
                 ],
-                isError: true
+                isError: true,
             };
         }
         return {
@@ -110,6 +110,25 @@ server.registerTool(
     }
 );
 
+server.registerResource(
+    "product-catalog",
+    "product://catalog",
+    {
+        description: "Browse All Products in the catalog",
+    },
+    async (uri) => {
+        const product_list = await svc.listProducts(200, 0);
+        return {
+            contents: [
+                {
+                    uri: uri.href,
+                    type: "text",
+                    text: JSON.stringify(product_list),
+                },
+            ],
+        };
+    }
+);
 // Start Communication with Client
 (async () => {
     const transport = new StdioServerTransport();
