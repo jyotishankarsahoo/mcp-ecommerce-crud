@@ -30,6 +30,5 @@
         "package.json",
         "README.md"
     ],
-    "author": "JSS",
-    "license": "MIT"
+    "author": "JSS"
 }
