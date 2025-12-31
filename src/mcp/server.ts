@@ -200,6 +200,44 @@ server.registerResource(
         };
     }
 );
+server.registerPrompt(
+    "Generate-Product-Description-Template",
+    {
+        title: "Generate Product desc Template",
+        description: "Create a compelling Description for ecommerce product",
+        argsSchema: {
+            productName: z.string().describe("Name of the product"),
+            features: z
+                .string()
+                .optional()
+                .describe("Key features of the product"),
+            targetAudience: z.string().optional().describe("Demographic"),
+        },
+    },
+    ({ productName, features, targetAudience }) => {
+        return {
+            messages: [
+                {
+                    role: "user",
+                    content: {
+                        type: "text",
+                        text: `Generate a compelling e-commerce product description for ${productName}.
+${features ? `Key Features:\n${features}` : ""}
+${targetAudience ? `Target Audience: ${targetAudience}` : ""}
+
+Please create:
+1. A catchy headline (5-8 words)
+2. A detailed description (2-3 paragraphs)
+3. 2-3 bullet points highlighting key benefits
+4. A call to action
+
+Make it engaging, SEO-friendly, and persuasive.`,
+                    },
+                },
+            ],
+        };
+    }
+);
 // Start Communication with Client
 (async () => {
     const transport = new StdioServerTransport();
