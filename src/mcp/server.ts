@@ -36,22 +36,13 @@ server.registerTool(
         title: "Add Product",
         description:
             "Create a new product with sku, name, (optional) description, price and quantity",
-        inputSchema: {
-            sku: z.string().min(1),
-            name: z.string().min(1),
-            description: z.string().optional().nullable(),
-            price: z.number().nonnegative(),
-            quantity: z.number().int().nonnegative(),
-        },
+        inputSchema: Product_Input_Scheme.shape,
         outputSchema: ProductScheme.shape,
     },
-    async ({ sku, name, description, price, quantity }) => {
+    async (raw) => {
+        const product_details = Product_Input_Scheme.parse(raw);
         const created = await svc.addProduct({
-            sku,
-            name,
-            description,
-            price,
-            quantity,
+            ...product_details,
         });
         return {
             content: [{ type: "text", text: JSON.stringify(created) }],
